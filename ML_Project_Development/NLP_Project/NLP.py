@@ -52,9 +52,95 @@ xtrain_tfidf_ngram_chars =  tfidf_vect_ngram_chars.transform(train_x)
 xvalid_tfidf_ngram_chars =  tfidf_vect_ngram_chars.transform(valid_x)
 
 
-#Word Embeddings
+################################################ Word Embeddings ################################################
 
 embeddings_index = {}
 for i, line in enumerate(open('data/wiki-news-300d-1M.vec')):
     values = line.split()
     embeddings_index[values[0]] = numpy.asarray(values[1:], dtype='float32')
+
+
+# create a tokenizer
+token = text.Tokenizer()
+token.fit_on_texts(trainDF['text'])
+word_index = token.word_index
+
+# convert text to sequence of tokens and pad them to ensure equal length vectors
+train_seq_x = sequence.pad_sequences(token.texts_to_sequences(train_x), maxlen=70)
+valid_seq_x = sequence.pad_sequences(token.texts_to_sequences(valid_x), maxlen=70)
+
+# create token-embedding mapping
+embedding_matrix = numpy.zeros((len(word_index) + 1, 300))
+for word, i in word_index.items():
+    embedding_vector = embeddings_index.get(word)
+    if embedding_vector is not None:
+        embedding_matrix[i] = embedding_vector
+
+################################################ Text / NLP based features ################################################
+
+
+trainDF['char_count'] = trainDF['text'].apply(len)
+trainDF['word_count'] = trainDF['text'].apply(lambda x: len(x.split()))
+trainDF['word_density'] = trainDF['char_count'] / (trainDF['word_count']+1)
+trainDF['punctuation_count'] = trainDF['text'].apply(lambda x: len("".join(_ for _ in x if _ in string.punctuation)))
+trainDF['title_word_count'] = trainDF['text'].apply(lambda x: len([wrd for wrd in x.split() if wrd.istitle()]))
+trainDF['upper_case_word_count'] = trainDF['text'].apply(lambda x: len([wrd for wrd in x.split() if wrd.isupper()]))
+
+
+pos_family = {
+    'noun' : ['NN','NNS','NNP','NNPS'],
+    'pron' : ['PRP','PRP$','WP','WP$'],
+    'verb' : ['VB','VBD','VBG','VBN','VBP','VBZ'],
+    'adj' :  ['JJ','JJR','JJS'],
+    'adv' : ['RB','RBR','RBS','WRB']
+}
+
+# function to check and get the part of speech tag count of a words in a given sentence
+def check_pos_tag(x, flag):
+    cnt = 0
+    try:
+        wiki = textblob.TextBlob(x)
+        for tup in wiki.tags:
+            ppo = list(tup)[1]
+            if ppo in pos_family[flag]:
+                cnt += 1
+    except:
+        pass
+    return cnt
+
+trainDF['noun_count'] = trainDF['text'].apply(lambda x: check_pos_tag(x, 'noun'))
+trainDF['verb_count'] = trainDF['text'].apply(lambda x: check_pos_tag(x, 'verb'))
+trainDF['adj_count'] = trainDF['text'].apply(lambda x: check_pos_tag(x, 'adj'))
+trainDF['adv_count'] = trainDF['text'].apply(lambda x: check_pos_tag(x, 'adv'))
+trainDF['pron_count'] = trainDF['text'].apply(lambda x: check_pos_tag(x, 'pron'))
+
+
+#################################################  2.5 Topic Models as features ################################################ ################################################
+
+# train a LDA Model
+lda_model = decomposition.LatentDirichletAllocation(n_components=20, learning_method='online', max_iter=20)
+X_topics = lda_model.fit_transform(xtrain_count)
+topic_word = lda_model.components_
+vocab = count_vect.get_feature_names()
+
+# view the topic models
+n_top_words = 10
+topic_summaries = []
+for i, topic_dist in enumerate(topic_word):
+    topic_words = numpy.array(vocab)[numpy.argsort(topic_dist)][:-(n_top_words+1):-1]
+    topic_summaries.append(' '.join(topic_words))
+
+
+#################################################  Model Building ################################################ ################################################
+
+def train_model(classifier, feature_vector_train, label, feature_vector_valid, is_neural_net=False):
+    # fit the training dataset on the classifier
+    classifier.fit(feature_vector_train, label)
+
+    # predict the labels on validation dataset
+    predictions = classifier.predict(feature_vector_valid)
+
+    if is_neural_net:
+        predictions = predictions.argmax(axis=-1)
+
+    return metrics.accuracy_score(predictions, valid_y)
