@@ -4,7 +4,7 @@ import os
 try:
     import theano
 except:
-    !pip install Theano
+    !pip3 install Theano
 import theano
 import tensorflow
 from tensorflow import keras

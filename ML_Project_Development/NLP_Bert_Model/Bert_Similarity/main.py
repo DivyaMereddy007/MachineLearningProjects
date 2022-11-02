@@ -5,7 +5,12 @@ sentences = [
     "The person box was packed with jelly many dozens of months later.",
     "He found a leprechaun in his walnut shell."
 ]
+!pip3 install bert
+!pip3 install torch==1.2.0 torchvision==0.4.0 -f
+!pip install -U sentence-transformers
+
 from sentence_transformers import SentenceTransformer
+
 model = SentenceTransformer('bert-base-nli-mean-tokens')
 
 #model =SentenceTransformer(model_name)

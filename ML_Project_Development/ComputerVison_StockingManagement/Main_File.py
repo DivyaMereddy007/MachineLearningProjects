@@ -4,7 +4,3 @@
 
 #7. Inventory Management Other than self-checkout, shoppers also expect precise information about the availability of certain products as they browse an online store. According to a study, 64% of retailers are looking forward to deploying data-powered solutions such as computer vision to optimize and manage inventory over the next few years.
 #Read more at: https://viso.ai/applications/computer-vision-in-retail/
-
-
-Out problem should be "develop a system to RECOGNIZE FACES AND PROVIDE ACCESS According"
-#https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7825042/
