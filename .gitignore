@@ -21,3 +21,10 @@
 ML_Project_Development/NLP_Project/data/corpus
 ML_Project_Development/Airlines_Predictions/Kaggle_Sample_Project/Data/.DS_Store
 ML_Project_Development/Airlines_Predictions/Kaggle_Sample_Project/.DS_Store
+ML_Project_Development/Airlines_Predictions/.DS_Store
+ML_Project_Development/NLP_Bert_Model/aclImdb/test/labeledBow.feat
+*.feat
+*.vocab
+*.feat
+*.feat
+*.feat
